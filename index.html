@@ -24,6 +24,13 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 .pdf-picker{display:inline-flex;position:relative;overflow:hidden;align-items:center;justify-content:center;min-height:48px;background:#2563eb;color:#fff;border-radius:11px;padding:12px 18px;font-weight:700;cursor:pointer}
 .pdf-picker input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:100px}
 .pdf-picker:focus-within{outline:3px solid #93c5fd;outline-offset:2px}
+
+.notes-paper{background:repeating-linear-gradient(to bottom,#fff 0px,#fff 31px,#d5dfed 31px,#d5dfed 32px);border:1px solid #c8d1de;border-radius:8px;overflow:hidden}
+#notes-input{display:block;margin:0;border:0;border-radius:0;background:transparent;min-height:512px;padding:0 16px;font:17px/32px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;resize:none;overflow:hidden;box-shadow:none}
+#handwriting-panel[hidden],#typing-panel[hidden]{display:none}
+#handwriting-panel .canvas-wrap{height:640px;border:0;border-radius:0;background:transparent}
+.notes-mode[aria-pressed="true"]{background:#2563eb;color:#fff}
+.notes-section{min-width:0}
 </style>
 </head>
 <body>
@@ -48,8 +55,13 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 <div class="toolbar"><button class="primary grow" id="play-btn" type="button">▶ Start Reading</button><button id="cursor-btn" type="button">▶ Read from cursor</button><button id="back-btn" type="button">↶ Back 10</button><button id="restart-btn" type="button">↺ Restart</button></div>
 <p class="help">After importing a PDF, scroll in the text box above and tap a word to place the cursor. Tap “Read from cursor” to skip straight there. Selecting text starts at the first selected word. Start/Pause resumes your reading position; Restart goes back to the beginning.</p>
 </section>
-<section aria-label="Drawing pad">
-<h2>🎨 Drawing Pad</h2>
+<section class="notes-section" aria-label="Reading notes">
+<h2>📝 Reading Notes</h2>
+<p class="help">One continuous lined sheet for notes as you read. Type with optional bullets, or switch to handwriting. Notes are saved on this browser.</p>
+<div class="toolbar"><button id="type-mode" class="notes-mode" type="button" aria-pressed="true">Type notes</button><button id="draw-mode" class="notes-mode" type="button" aria-pressed="false">Handwrite / draw</button><button id="bullets-btn" type="button" aria-pressed="false">• Bullets off</button><button id="export-notes" type="button">Save text</button></div>
+<p id="notes-status" class="help" role="status"></p>
+<div class="notes-paper" id="typing-panel"><label class="sr-only" for="notes-input">Your reading notes</label><textarea id="notes-input" placeholder="Write your notes here…" spellcheck="true"></textarea></div>
+<div id="handwriting-panel" hidden>
 <div class="toolbar" id="palette" aria-label="Pen color">
 <button class="swatch" style="background:#ff3b30" data-color="#ff3b30" aria-label="Red" aria-pressed="true"></button>
 <button class="swatch" style="background:#2563eb" data-color="#2563eb" aria-label="Blue" aria-pressed="false"></button>
@@ -58,14 +70,32 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 <label for="custom-color" class="sr-only">Custom pen color</label><input id="custom-color" class="color-input" type="color" value="#ff3b30" title="Custom pen color">
 </div>
 <div class="toolbar"><label for="thickness">Thickness <span id="thickness-val">4</span>px</label><input id="thickness" class="range" type="range" min="1" max="30" value="4"><button id="undo-btn" type="button">Undo</button><button id="clear-canvas-btn" type="button">Clear</button><button class="primary" id="save-btn" type="button">Save PNG</button></div>
-<div class="canvas-wrap"><canvas id="paint-canvas" aria-label="Draw with finger, Apple Pencil, mouse, or trackpad"></canvas></div>
-<p class="help">On iPad use Apple Pencil or your finger. On iPhone draw with your finger. On Mac use your mouse or trackpad. Save your image with “Save PNG.”</p>
+<div class="notes-paper"><div class="canvas-wrap"><canvas id="paint-canvas" aria-label="Draw with finger, Apple Pencil, mouse, or trackpad"></canvas></div></div>
+<div class="toolbar"><button id="more-paper" type="button">＋ More lined paper</button></div>
+<p class="help">Draw with your finger or Apple Pencil. Scroll outside the sheet to move down. Add more paper when you need it; Save PNG exports the whole handwritten sheet.</p>
+</div>
 </section>
 </main>
 <script>
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
+// Continuous typed notes, independent of the reader text.
+const notes=$('notes-input');let bullets=false;
+function fitNotes(){notes.style.height='auto';notes.style.height=Math.max(512,notes.scrollHeight)+'px'}
+function saveNotes(){try{localStorage.setItem('huma-reading-notes',notes.value);$('notes-status').textContent='Notes saved on this browser.'}catch(e){$('notes-status').textContent='Browser storage is unavailable. Use Save text to keep your notes.'}}
+try{notes.value=localStorage.getItem('huma-reading-notes')||''}catch(e){}
+notes.addEventListener('input',()=>{fitNotes();saveNotes()});
+$('bullets-btn').addEventListener('click',()=>{bullets=!bullets;$('bullets-btn').setAttribute('aria-pressed',String(bullets));$('bullets-btn').textContent=bullets?'• Bullets on':'• Bullets off';
+if(bullets){const start=notes.value.lastIndexOf('\n',Math.max(0,notes.selectionStart-1))+1;const end=notes.value.indexOf('\n',start);const line=notes.value.slice(start,end<0?notes.value.length:end);if(!line.startsWith('• ')){notes.setRangeText('• ',start,start,'end');saveNotes();fitNotes()}}
+notes.focus()});
+notes.addEventListener('keydown',e=>{if(e.key!=='Enter'||e.isComposing||!bullets)return;e.preventDefault();const start=notes.selectionStart;const lineStart=notes.value.lastIndexOf('\n',Math.max(0,start-1))+1;const line=notes.value.slice(lineStart,start);
+if(line==='• '){notes.setRangeText('',lineStart,start,'end');bullets=false;$('bullets-btn').setAttribute('aria-pressed','false');$('bullets-btn').textContent='• Bullets off'}else{notes.setRangeText('\n• ',notes.selectionStart,notes.selectionEnd,'end')}
+fitNotes();saveNotes()});
+function notesMode(draw){$('typing-panel').hidden=draw;$('handwriting-panel').hidden=!draw;$('type-mode').setAttribute('aria-pressed',String(!draw));$('draw-mode').setAttribute('aria-pressed',String(draw));$('bullets-btn').disabled=draw;$('export-notes').disabled=draw;requestAnimationFrame(()=>{if(draw)resize();else fitNotes()})}
+$('type-mode').addEventListener('click',()=>notesMode(false));$('draw-mode').addEventListener('click',()=>notesMode(true));
+$('export-notes').addEventListener('click',()=>{const url=URL.createObjectURL(new Blob([notes.value],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Humas-reading-notes.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000)});
+requestAnimationFrame(fitNotes);window.addEventListener('resize',()=>{if(!$('typing-panel').hidden)fitNotes()});
 // Reader
 let words=[],currentIdx=0,sourceText='',isPlaying=false,timer=null;
 const input=$('text-input'),wordBox=$('word-box'),playBtn=$('play-btn');
@@ -200,18 +230,21 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&isPlaying)
 // Drawing — vector-style stroke storage ensures no quality loss or cut-off on resize.
 const canvas=$('paint-canvas'),ctx=canvas.getContext('2d');let color='#ff3b30',width=4,strokes=[],active=null,pointerId=null;
 function getSize(){const r=canvas.getBoundingClientRect();return {w:r.width,h:r.height}}
-function paint(){const {w,h}=getSize();ctx.clearRect(0,0,w,h);for(const stroke of strokes){const pts=stroke.points;if(!pts.length)continue;ctx.strokeStyle=stroke.color;ctx.fillStyle=stroke.color;ctx.lineWidth=stroke.width;ctx.lineCap='round';ctx.lineJoin='round';if(pts.length===1){ctx.beginPath();ctx.arc(pts[0].x*w,pts[0].y*h,stroke.width/2,0,Math.PI*2);ctx.fill();continue}ctx.beginPath();ctx.moveTo(pts[0].x*w,pts[0].y*h);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x*w,pts[i].y*h);ctx.stroke()}}
+function paint(){const {w,h}=getSize();ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#d5dfed';ctx.lineWidth=1;ctx.beginPath();for(let y=31.5;y<h;y+=32){ctx.moveTo(0,y);ctx.lineTo(w,y)}ctx.stroke();for(const stroke of strokes){const pts=stroke.points;if(!pts.length)continue;ctx.strokeStyle=stroke.color;ctx.fillStyle=stroke.color;ctx.lineWidth=stroke.width;ctx.lineCap='round';ctx.lineJoin='round';if(pts.length===1){ctx.beginPath();ctx.arc(pts[0].x*w,pts[0].y,stroke.width/2,0,Math.PI*2);ctx.fill();continue}ctx.beginPath();ctx.moveTo(pts[0].x*w,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x*w,pts[i].y);ctx.stroke()}}
 function resize(){const {w,h}=getSize();if(!w||!h)return;const dpr=window.devicePixelRatio||1;const bw=Math.round(w*dpr),bh=Math.round(h*dpr);if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;ctx.setTransform(dpr,0,0,dpr,0,0)}paint()}
-function pos(ev){const r=canvas.getBoundingClientRect();return {x:(ev.clientX-r.left)/r.width,y:(ev.clientY-r.top)/r.height}}
+function pos(ev){const r=canvas.getBoundingClientRect();return {x:(ev.clientX-r.left)/r.width,y:ev.clientY-r.top}}
 canvas.addEventListener('pointerdown',e=>{if(pointerId!==null||(e.pointerType==='mouse'&&e.button!==0))return;e.preventDefault();pointerId=e.pointerId;canvas.setPointerCapture?.(pointerId);active={color,width,points:[pos(e)]};strokes.push(active);paint()});
 canvas.addEventListener('pointermove',e=>{if(pointerId!==e.pointerId||!active)return;e.preventDefault();const batch=e.getCoalescedEvents?.()||[e];for(const ev of batch)active.points.push(pos(ev));paint()});
-function endDraw(e){if(pointerId!==e.pointerId)return;pointerId=null;active=null;if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId)}
+function endDraw(e){if(pointerId!==e.pointerId)return;pointerId=null;active=null;saveDrawing();if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId)}
 canvas.addEventListener('pointerup',endDraw);canvas.addEventListener('pointercancel',endDraw);canvas.addEventListener('lostpointercapture',endDraw);
 $('palette').addEventListener('click',e=>{const b=e.target.closest('[data-color]');if(!b)return;color=b.dataset.color;$('custom-color').value=color;document.querySelectorAll('.swatch').forEach(s=>s.setAttribute('aria-pressed',String(s===b)))});
 $('custom-color').addEventListener('input',e=>{color=e.target.value;document.querySelectorAll('.swatch').forEach(s=>s.setAttribute('aria-pressed','false'))});
 $('thickness').addEventListener('input',e=>{width=Number(e.target.value);$('thickness-val').textContent=width});
-$('undo-btn').addEventListener('click',()=>{strokes.pop();paint()});
-$('clear-canvas-btn').addEventListener('click',()=>{strokes=[];paint()});
+$('more-paper').addEventListener('click',()=>{const wrap=canvas.parentElement;const old=wrap.getBoundingClientRect().height;if(old>=8192){$('notes-status').textContent='This sheet is full. Save PNG before clearing it.';return}wrap.style.height=Math.min(8192,old+512)+'px';resize();saveDrawing()});
+function saveDrawing(){try{localStorage.setItem('huma-reading-drawing',JSON.stringify({strokes,height:parseInt(canvas.parentElement.style.height)||640}));$('notes-status').textContent='Notes saved on this browser.'}catch(e){$('notes-status').textContent='Drawing could not be saved on this browser. Use Save PNG.'}}
+try{const saved=JSON.parse(localStorage.getItem('huma-reading-drawing')||'null');if(saved&&Array.isArray(saved.strokes)){strokes=saved.strokes;canvas.parentElement.style.height=Math.max(640,Math.min(8192,saved.height||640))+'px'}}catch(e){}
+$('undo-btn').addEventListener('click',()=>{strokes.pop();paint();saveDrawing()});
+$('clear-canvas-btn').addEventListener('click',()=>{strokes=[];paint();saveDrawing()});
 $('save-btn').addEventListener('click',()=>{const {w,h}=getSize();const output=document.createElement('canvas');output.width=Math.round(w*2);output.height=Math.round(h*2);const c=output.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,output.width,output.height);c.drawImage(canvas,0,0,output.width,output.height);output.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='drawing.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)},'image/png')});
 if('ResizeObserver'in window)new ResizeObserver(resize).observe(canvas);window.addEventListener('resize',resize);window.addEventListener('orientationchange',resize);requestAnimationFrame(resize);
 })();
