@@ -52,8 +52,8 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 <button id="sample-btn" type="button">Try sample</button>
 <button id="clear-text-btn" type="button">Clear text</button>
 </div>
-<div class="toolbar"><button id="save-session" type="button">Save reading + notes</button><label class="pdf-picker">Open saved / text file<input id="open-session" type="file" accept=".txt,.json,text/plain,application/json" aria-label="Open saved reading and notes or plain text file"></label></div>
-<p id="session-status" class="help" role="status">Save a text file to Files with your reading text, place, typed notes and handwriting. No PDF or app code is included. Open it here next time; save a new copy after changes.</p>
+<div class="toolbar"><button id="save-session" type="button">Save reading + notes to device</button><label class="pdf-picker">Open saved / text file<input id="open-session" type="file" accept=".txt,.json,text/plain,application/json" aria-label="Open saved reading and notes or plain text file"></label></div>
+<p id="session-status" class="help" role="status">Save a text file with your reading text, place, typed notes and handwriting. On iPhone, choose Save to Files → On My iPhone in the share sheet. No PDF or app code is included. Open it here next time; save a new copy after changes.</p>
 <p id="file-status" class="help" role="status">Tap Import PDF → Browse → choose a PDF from iCloud Drive, Google Drive, OneDrive, or On My iPhone/iPad. A network connection is needed to load the PDF text extractor. Scanned PDFs without a text layer are not supported.</p>
 <div class="toolbar"><label for="wpm">Words/min</label><input id="wpm" class="wpm" type="number" inputmode="numeric" min="30" max="1200" step="10" value="300"><button id="slower-btn" type="button" aria-label="Slow down">− 25</button><button id="faster-btn" type="button" aria-label="Speed up">+ 25</button></div>
 <div class="toolbar"><label for="chunk-size">Words at a time: <output id="chunk-value" for="chunk-size">1</output></label><span>1</span><input id="chunk-size" class="range" type="range" min="1" max="8" step="1" value="1" aria-describedby="chunk-help"><span>8</span></div>
@@ -108,7 +108,7 @@ notes.addEventListener('keydown',e=>{if(e.isComposing)return;if(e.key==='Tab'&&n
 notes.addEventListener('beforeinput',e=>{if(!e.isComposing&&['insertLineBreak','insertParagraph'].includes(e.inputType)&&noteStyle!=='none'){e.preventDefault();insertNoteLine()}});
 function notesMode(draw){$('typing-panel').hidden=draw;$('handwriting-panel').hidden=!draw;$('type-mode').setAttribute('aria-pressed',String(!draw));$('draw-mode').setAttribute('aria-pressed',String(draw));$('note-style').disabled=draw;$('indent-note').disabled=draw;$('outdent-note').disabled=draw;$('export-notes').disabled=draw;requestAnimationFrame(()=>{if(draw)resize();else fitNotes()})}
 $('type-mode').addEventListener('click',()=>notesMode(false));$('draw-mode').addEventListener('click',()=>notesMode(true));
-$('export-notes').addEventListener('click',()=>downloadText(notes.value,'Humas-reading-notes.txt'));
+$('export-notes').addEventListener('click',async()=>{$('notes-status').textContent=await downloadText(notes.value,'Humas-reading-notes.txt')});
 requestAnimationFrame(fitNotes);window.addEventListener('resize',()=>{if(!$('typing-panel').hidden)fitNotes()});
 // Reader
 let words=[],currentIdx=0,sourceText='',isPlaying=false,timer=null;
@@ -263,10 +263,22 @@ function saveDrawing(){try{localStorage.setItem('huma-reading-drawing',JSON.stri
 try{const saved=JSON.parse(localStorage.getItem('huma-reading-drawing')||'null');if(saved&&Array.isArray(saved.strokes)){strokes=saved.strokes;canvas.parentElement.style.height=Math.max(640,Math.min(8192,saved.height||640))+'px'}}catch(e){}
 $('undo-btn').addEventListener('click',()=>{strokes.pop();paint();saveDrawing()});
 $('clear-canvas-btn').addEventListener('click',()=>{strokes=[];paint();saveDrawing()});
-$('save-btn').addEventListener('click',()=>{const {w,h}=getSize();const output=document.createElement('canvas');output.width=Math.round(w*2);output.height=Math.round(h*2);const c=output.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,output.width,output.height);c.drawImage(canvas,0,0,output.width,output.height);output.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='drawing.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)},'image/png')});
+$('save-btn').addEventListener('click',()=>{const {w,h}=getSize();const output=document.createElement('canvas');output.width=Math.round(w*2);output.height=Math.round(h*2);const c=output.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,output.width,output.height);c.drawImage(canvas,0,0,output.width,output.height);output.toBlob(async blob=>{if(!blob)return;try{$('notes-status').textContent=await saveDeviceFile(blob,'drawing.png')}catch(err){$('notes-status').textContent='Could not save drawing: '+err.message}},'image/png')});
 // Portable session files contain data only, never the app HTML or PDF.
 const SESSION_HEADER='HUMA SPEED READER SAVE v1\n';
-function downloadText(text,name){const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+async function saveDeviceFile(blob,name){
+ // Prefer a native destination picker where the browser provides one.
+ if(typeof window.showSaveFilePicker==='function'){
+  try{const handle=await window.showSaveFilePicker({suggestedName:name,startIn:'downloads'});const stream=await handle.createWritable();await stream.write(blob);await stream.close();return 'File saved to your chosen device folder.'}catch(err){if(err.name==='AbortError')return 'Save cancelled. Your reading and notes are still here.';if(err.name!=='SecurityError'&&err.name!=='NotAllowedError')throw err;}
+ }
+ // Safari on iPhone provides file sharing instead of a direct folder picker.
+ const file=new File([blob],name,{type:blob.type||'application/octet-stream'});
+ if(typeof navigator.canShare==='function'&&navigator.canShare({files:[file]})&&typeof navigator.share==='function'){
+  try{await navigator.share({files:[file]});return 'File handed to the device share sheet. Choose Save to Files → On My iPhone (or your preferred folder).';}catch(err){if(err.name==='AbortError')return 'Save cancelled. Your reading and notes are still here.';}
+ }
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);return 'Download requested. Check your browser Downloads, or choose Save to Files → On My iPhone. Nothing was uploaded to GitHub.';
+}
+async function downloadText(text,name){try{return await saveDeviceFile(new Blob([text],{type:'text/plain;charset=utf-8'}),name)}catch(err){return 'Could not save the file: '+(err.message||'Please try again in Safari.')}}
 function validateSession(data){
  if(!data||data.version!==1||typeof data.text!=='string'||typeof data.notes!=='string'||!Number.isInteger(data.position)||data.position<0)throw new Error('This is not a valid reading save file.');
  const drawing=data.drawing||{strokes:[],height:640};
@@ -276,7 +288,7 @@ function validateSession(data){
  drawing.height=Math.max(640,Math.min(8192,Number(drawing.height)||640));data.drawing=drawing;return data;
 }
 $('open-notes').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>5*1024*1024)throw new Error('Choose a notes file smaller than 5 MB.');const text=await file.text();if(text.startsWith(SESSION_HEADER))throw new Error('Use Open saved / text file for a full reading save.');notes.value=text;fitNotes();saveNotes();notesMode(false)}catch(err){$('notes-status').textContent=err.message}finally{e.target.value=''}});
-$('save-session').addEventListener('click',()=>{pause();syncWords();const data={version:1,savedAt:new Date().toISOString(),text:input.value,position:currentIdx,notes:notes.value,outline:noteStyle,drawing:{strokes,height:parseInt(canvas.parentElement.style.height)||640},settings:{wpm:rate(),chunk:chunkSize(),size:Number($('reader-size').value),weight:$('reader-weight').value}};const savedText=SESSION_HEADER+JSON.stringify(data,null,2);if(new Blob([savedText]).size>20*1024*1024){$('session-status').textContent='This save is larger than 20 MB. Export handwriting with Save PNG, then clear the handwriting and save again.';return}downloadText(savedText,'Humas-reading-and-notes.txt');$('session-status').textContent='Save this file to Files. Open it here next time to restore your text, place and notes. Save again after making changes.'});
+$('save-session').addEventListener('click',async()=>{pause();syncWords();const data={version:1,savedAt:new Date().toISOString(),text:input.value,position:currentIdx,notes:notes.value,outline:noteStyle,drawing:{strokes,height:parseInt(canvas.parentElement.style.height)||640},settings:{wpm:rate(),chunk:chunkSize(),size:Number($('reader-size').value),weight:$('reader-weight').value}};const savedText=SESSION_HEADER+JSON.stringify(data,null,2);if(new Blob([savedText]).size>20*1024*1024){$('session-status').textContent='This save is larger than 20 MB. Export handwriting with Save PNG, then clear the handwriting and save again.';return}downloadText(savedText,'Humas-reading-and-notes.txt');$('session-status').textContent='Save this file to Files. Open it here next time to restore your text, place and notes. Save again after making changes.'});
 $('open-session').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;pause();try{
  if(file.size>20*1024*1024)throw new Error('Choose a text/save file smaller than 20 MB.');
  const text=(await file.text()).replace(/^\uFEFF/,'');
