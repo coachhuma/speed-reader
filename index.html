@@ -52,6 +52,8 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 <button id="sample-btn" type="button">Try sample</button>
 <button id="clear-text-btn" type="button">Clear text</button>
 </div>
+<div class="toolbar"><button id="save-session" type="button">Save reading + notes</button><label class="pdf-picker">Open saved / text file<input id="open-session" type="file" accept=".txt,.json,text/plain,application/json" aria-label="Open saved reading and notes or plain text file"></label></div>
+<p id="session-status" class="help" role="status">Save a text file to Files with your reading text, place, typed notes and handwriting. No PDF or app code is included. Open it here next time; save a new copy after changes.</p>
 <p id="file-status" class="help" role="status">Tap Import PDF → Browse → choose a PDF from iCloud Drive, Google Drive, OneDrive, or On My iPhone/iPad. A network connection is needed to load the PDF text extractor. Scanned PDFs without a text layer are not supported.</p>
 <div class="toolbar"><label for="wpm">Words/min</label><input id="wpm" class="wpm" type="number" inputmode="numeric" min="30" max="1200" step="10" value="300"><button id="slower-btn" type="button" aria-label="Slow down">− 25</button><button id="faster-btn" type="button" aria-label="Speed up">+ 25</button></div>
 <div class="toolbar"><label for="chunk-size">Words at a time: <output id="chunk-value" for="chunk-size">1</output></label><span>1</span><input id="chunk-size" class="range" type="range" min="1" max="8" step="1" value="1" aria-describedby="chunk-help"><span>8</span></div>
@@ -65,8 +67,8 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 </section>
 <section class="notes-section" aria-label="Reading notes">
 <h2>📝 Reading Notes</h2>
-<p class="help">One continuous lined sheet for notes as you read. Type with optional bullets, or switch to handwriting. Notes are saved on this browser.</p>
-<div class="toolbar"><button id="type-mode" class="notes-mode" type="button" aria-pressed="true">Type notes</button><button id="draw-mode" class="notes-mode" type="button" aria-pressed="false">Handwrite / draw</button><button id="bullets-btn" type="button" aria-pressed="false">• Bullets off</button><button id="export-notes" type="button">Save text</button></div>
+<p class="help">One continuous lined sheet. Choose plain text, dot bullets, or an outline: I. → A. → 1. → a. → i. Use Indent / Outdent to change levels; Enter continues the list and an empty item ends it. Notes save in this browser; Save reading + notes makes a portable copy.</p>
+<div class="toolbar"><button id="type-mode" class="notes-mode" type="button" aria-pressed="true">Type notes</button><button id="draw-mode" class="notes-mode" type="button" aria-pressed="false">Handwrite / draw</button><label for="note-style" class="sr-only">Note list style</label><select id="note-style" class="reader-select"><option value="none">Plain text</option><option value="dot">• Dot bullets</option><option value="0">I. Roman numerals</option><option value="1">A. Capital letters</option><option value="2">1. Numbers</option><option value="3">a. Lowercase letters</option><option value="4">i. Small Roman numerals</option></select><button id="outdent-note" type="button" aria-label="Outdent note">← Outdent</button><button id="indent-note" type="button" aria-label="Indent note">Indent →</button><button id="export-notes" type="button">Save notes text</button><label class="pdf-picker">Open notes text<input id="open-notes" type="file" accept=".txt,text/plain" aria-label="Open notes text file"></label></div>
 <p id="notes-status" class="help" role="status"></p>
 <div class="notes-paper" id="typing-panel"><label class="sr-only" for="notes-input">Your reading notes</label><textarea id="notes-input" placeholder="Write your notes here…" spellcheck="true"></textarea></div>
 <div id="handwriting-panel" hidden>
@@ -83,20 +85,30 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 'use strict';
 const $ = id => document.getElementById(id);
 // Continuous typed notes, independent of the reader text.
-const notes=$('notes-input');let bullets=false;
+const notes=$('notes-input');let noteStyle='none';
 function fitNotes(){notes.style.height='auto';notes.style.height=Math.max(512,notes.scrollHeight)+'px'}
-function saveNotes(){try{localStorage.setItem('huma-reading-notes',notes.value);$('notes-status').textContent='Notes saved on this browser.'}catch(e){$('notes-status').textContent='Browser storage is unavailable. Use Save text to keep your notes.'}}
+function saveNotes(){try{localStorage.setItem('huma-reading-notes',notes.value);$('notes-status').textContent='Notes saved on this browser. Use Save reading + notes to keep a file.'}catch(e){$('notes-status').textContent='Use Save reading + notes to keep a file.'}}
 try{notes.value=localStorage.getItem('huma-reading-notes')||''}catch(e){}
 notes.addEventListener('input',()=>{fitNotes();saveNotes()});
-$('bullets-btn').addEventListener('click',()=>{bullets=!bullets;$('bullets-btn').setAttribute('aria-pressed',String(bullets));$('bullets-btn').textContent=bullets?'• Bullets on':'• Bullets off';
-if(bullets){const start=notes.value.lastIndexOf('\n',Math.max(0,notes.selectionStart-1))+1;const end=notes.value.indexOf('\n',start);const line=notes.value.slice(start,end<0?notes.value.length:end);if(!line.startsWith('• ')){notes.setRangeText('• ',start,start,'end');saveNotes();fitNotes()}}
-notes.focus()});
-notes.addEventListener('keydown',e=>{if(e.key!=='Enter'||e.isComposing||!bullets)return;e.preventDefault();const start=notes.selectionStart;const lineStart=notes.value.lastIndexOf('\n',Math.max(0,start-1))+1;const line=notes.value.slice(lineStart,start);
-if(line==='• '){notes.setRangeText('',lineStart,start,'end');bullets=false;$('bullets-btn').setAttribute('aria-pressed','false');$('bullets-btn').textContent='• Bullets off'}else{notes.setRangeText('\n• ',notes.selectionStart,notes.selectionEnd,'end')}
-fitNotes();saveNotes()});
-function notesMode(draw){$('typing-panel').hidden=draw;$('handwriting-panel').hidden=!draw;$('type-mode').setAttribute('aria-pressed',String(!draw));$('draw-mode').setAttribute('aria-pressed',String(draw));$('bullets-btn').disabled=draw;$('export-notes').disabled=draw;requestAnimationFrame(()=>{if(draw)resize();else fitNotes()})}
+function roman(n){let out='';for(const [value,letters] of [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']])while(n>=value){out+=letters;n-=value}return out}
+function alpha(n){let out='';while(n>0){n--;out=String.fromCharCode(65+n%26)+out;n=Math.floor(n/26)}return out}
+function outlineMarker(depth,n){return [()=>roman(n),()=>alpha(n),()=>String(n),()=>alpha(n).toLowerCase(),()=>roman(n).toLowerCase()][depth]()}
+function markerNumber(marker,depth){if(depth===2)return Number(marker)||1;if(depth===1||depth===3)return [...marker.toUpperCase()].reduce((v,c)=>v*26+c.charCodeAt(0)-64,0)||1;const vals={I:1,V:5,X:10,L:50,C:100,D:500,M:1000};const letters=marker.toUpperCase();let sum=0;for(let i=0;i<letters.length;i++){const a=vals[letters[i]]||0,b=vals[letters[i+1]]||0;sum+=a<b?-a:a}return sum||1}
+function noteLine(){const pos=notes.selectionStart,start=pos===0?0:notes.value.lastIndexOf('\n',pos-1)+1;let end=notes.value.indexOf('\n',pos);if(end<0)end=notes.value.length;return {start,end,text:notes.value.slice(start,end)}}
+const notePrefix=/^(\s*)(?:•\s+|([A-Za-z0-9]+)\.\s+)/;
+function applyNoteStyle(){const line=noteLine(),body=line.text.replace(notePrefix,'');let prefix='';if(noteStyle==='dot')prefix='• ';else if(noteStyle!=='none'){const depth=Number(noteStyle);let number=1;const previous=notes.value.slice(0,line.start).split('\n').reverse();for(const entry of previous){if(!entry.trim())continue;const m=entry.match(notePrefix);if(!m)break;const priorDepth=Math.floor(m[1].length/2);if(priorDepth<depth)break;if(priorDepth===depth){if(m[2])number=markerNumber(m[2],depth)+1;break}}prefix='  '.repeat(depth)+outlineMarker(depth,Math.min(3999,number))+'. '}
+notes.setRangeText(prefix+body,line.start,line.end,'end');fitNotes();saveNotes();notes.focus()}
+$('note-style').addEventListener('change',()=>{noteStyle=$('note-style').value;applyNoteStyle()});
+function changeIndent(delta){if(noteStyle==='none'||noteStyle==='dot')noteStyle='0';else noteStyle=String(Math.max(0,Math.min(4,Number(noteStyle)+delta)));$('note-style').value=noteStyle;applyNoteStyle()}
+$('indent-note').addEventListener('click',()=>changeIndent(1));$('outdent-note').addEventListener('click',()=>changeIndent(-1));
+function insertNoteLine(){if(noteStyle==='none')return false;const line=noteLine(),prefix=line.text.match(notePrefix);let style=noteStyle;if(prefix){style=prefix[0].includes('•')?'dot':String(Math.max(0,Math.min(4,Math.floor(prefix[1].length/2))))}
+if(prefix&&!line.text.slice(prefix[0].length).trim()){notes.setRangeText('',line.start,line.end,'end');noteStyle='none';$('note-style').value='none'}else{let next='• ';if(style!=='dot'){const depth=Number(style);const num=prefix?.[2]?markerNumber(prefix[2],depth)+1:1;next='  '.repeat(depth)+outlineMarker(depth,Math.min(3999,num))+'. '}notes.setRangeText('\n'+next,notes.selectionStart,notes.selectionEnd,'end');noteStyle=style;$('note-style').value=style}fitNotes();saveNotes();return true}
+notes.addEventListener('keydown',e=>{if(e.isComposing)return;if(e.key==='Tab'&&noteStyle!=='none'){e.preventDefault();changeIndent(e.shiftKey?-1:1)}else if(e.key==='Enter'&&!e.shiftKey&&noteStyle!=='none'){e.preventDefault();insertNoteLine()}});
+// iPhone keyboards may emit beforeinput without a keydown event.
+notes.addEventListener('beforeinput',e=>{if(!e.isComposing&&['insertLineBreak','insertParagraph'].includes(e.inputType)&&noteStyle!=='none'){e.preventDefault();insertNoteLine()}});
+function notesMode(draw){$('typing-panel').hidden=draw;$('handwriting-panel').hidden=!draw;$('type-mode').setAttribute('aria-pressed',String(!draw));$('draw-mode').setAttribute('aria-pressed',String(draw));$('note-style').disabled=draw;$('indent-note').disabled=draw;$('outdent-note').disabled=draw;$('export-notes').disabled=draw;requestAnimationFrame(()=>{if(draw)resize();else fitNotes()})}
 $('type-mode').addEventListener('click',()=>notesMode(false));$('draw-mode').addEventListener('click',()=>notesMode(true));
-$('export-notes').addEventListener('click',()=>{const url=URL.createObjectURL(new Blob([notes.value],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Humas-reading-notes.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000)});
+$('export-notes').addEventListener('click',()=>downloadText(notes.value,'Humas-reading-notes.txt'));
 requestAnimationFrame(fitNotes);window.addEventListener('resize',()=>{if(!$('typing-panel').hidden)fitNotes()});
 // Reader
 let words=[],currentIdx=0,sourceText='',isPlaying=false,timer=null;
@@ -252,6 +264,29 @@ try{const saved=JSON.parse(localStorage.getItem('huma-reading-drawing')||'null')
 $('undo-btn').addEventListener('click',()=>{strokes.pop();paint();saveDrawing()});
 $('clear-canvas-btn').addEventListener('click',()=>{strokes=[];paint();saveDrawing()});
 $('save-btn').addEventListener('click',()=>{const {w,h}=getSize();const output=document.createElement('canvas');output.width=Math.round(w*2);output.height=Math.round(h*2);const c=output.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,output.width,output.height);c.drawImage(canvas,0,0,output.width,output.height);output.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='drawing.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)},'image/png')});
+// Portable session files contain data only, never the app HTML or PDF.
+const SESSION_HEADER='HUMA SPEED READER SAVE v1\n';
+function downloadText(text,name){const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+function validateSession(data){
+ if(!data||data.version!==1||typeof data.text!=='string'||typeof data.notes!=='string'||!Number.isInteger(data.position)||data.position<0)throw new Error('This is not a valid reading save file.');
+ const drawing=data.drawing||{strokes:[],height:640};
+ if(!Array.isArray(drawing.strokes)||drawing.strokes.length>100000)throw new Error('Invalid saved handwriting.');
+ let points=0;
+ for(const stroke of drawing.strokes){if(!stroke||!/^#[0-9a-f]{6}$/i.test(stroke.color)||!Number.isFinite(stroke.width)||stroke.width<1||stroke.width>30||!Array.isArray(stroke.points))throw new Error('Invalid saved handwriting.');points+=stroke.points.length;if(points>1000000)throw new Error('Handwriting file is too large.');for(const p of stroke.points)if(!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.x<0||p.x>1||p.y<0||p.y>8192)throw new Error('Invalid handwriting coordinates.');}
+ drawing.height=Math.max(640,Math.min(8192,Number(drawing.height)||640));data.drawing=drawing;return data;
+}
+$('open-notes').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>5*1024*1024)throw new Error('Choose a notes file smaller than 5 MB.');const text=await file.text();if(text.startsWith(SESSION_HEADER))throw new Error('Use Open saved / text file for a full reading save.');notes.value=text;fitNotes();saveNotes();notesMode(false)}catch(err){$('notes-status').textContent=err.message}finally{e.target.value=''}});
+$('save-session').addEventListener('click',()=>{pause();syncWords();const data={version:1,savedAt:new Date().toISOString(),text:input.value,position:currentIdx,notes:notes.value,outline:noteStyle,drawing:{strokes,height:parseInt(canvas.parentElement.style.height)||640},settings:{wpm:rate(),chunk:chunkSize(),size:Number($('reader-size').value),weight:$('reader-weight').value}};const savedText=SESSION_HEADER+JSON.stringify(data,null,2);if(new Blob([savedText]).size>20*1024*1024){$('session-status').textContent='This save is larger than 20 MB. Export handwriting with Save PNG, then clear the handwriting and save again.';return}downloadText(savedText,'Humas-reading-and-notes.txt');$('session-status').textContent='Save this file to Files. Open it here next time to restore your text, place and notes. Save again after making changes.'});
+$('open-session').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;pause();try{
+ if(file.size>20*1024*1024)throw new Error('Choose a text/save file smaller than 20 MB.');
+ const text=(await file.text()).replace(/^\uFEFF/,'');
+ if(!text.startsWith(SESSION_HEADER)){if(/^\s*</.test(text)||text.startsWith('%PDF-'))throw new Error('Choose a plain text file or a saved reading file. Use Import PDF for PDFs.');input.value=text;restart();$('session-status').textContent='Plain text opened. Existing notes kept.';return;}
+ const data=validateSession(JSON.parse(text.slice(SESSION_HEADER.length)));
+ input.value=data.text;sourceText='';syncWords();currentIdx=Math.min(data.position,words.length);notes.value=data.notes;fitNotes();saveNotes();strokes=data.drawing.strokes;canvas.parentElement.style.height=data.drawing.height+'px';saveDrawing();
+ const prefs=data.settings||{};$('wpm').value=Math.max(30,Math.min(1200,Number(prefs.wpm)||300));$('chunk-size').value=Math.max(1,Math.min(8,Number(prefs.chunk)||1));$('chunk-value').textContent=chunkSize();$('reader-size').value=Math.max(24,Math.min(72,Number(prefs.size)||48));$('reader-weight').value=['300','400','600','750'].includes(String(prefs.weight))?String(prefs.weight):'750';updateReaderFont();noteStyle=['none','dot','0','1','2','3','4'].includes(data.outline)?data.outline:'none';$('note-style').value=noteStyle;
+ let offset=input.value.length,index=0;for(const token of input.value.matchAll(/\S+/g)){if(index++===currentIdx){offset=token.index;break}}input.setSelectionRange(offset,offset);wordBox.textContent=currentIdx>=words.length?'Finished':words.slice(currentIdx,currentIdx+chunkSize()).join(' ')||'Ready to read';playBtn.textContent='▶ Resume';progress();requestAnimationFrame(resize);$('session-status').textContent=`Restored reading text, notes and place (${currentIdx} / ${words.length} words). Tap the blue button to continue.`;
+ }catch(err){$('session-status').textContent='Could not open file: '+err.message}finally{e.target.value=''}});
+
 if('ResizeObserver'in window)new ResizeObserver(resize).observe(canvas);window.addEventListener('resize',resize);window.addEventListener('orientationchange',resize);requestAnimationFrame(resize);
 })();
 </script>
