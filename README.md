@@ -24,3 +24,7 @@ This repository contains the app source. The separate ChatGPT Sites deployment d
 Choose **Save reading + notes** to download a `.txt` data file containing extracted reading text, the next word position, typed notes, vector handwriting, and reading settings. It contains no PDF, app HTML, or executable code. Choose **Open saved / text file** to restore it. Save another copy after changes; downloaded files do not update automatically. Saves can be moved between devices and hosting addresses. Full saves are limited to 20 MB. Ordinary plain text can also be opened as reading text.
 
 Use **Save notes text** and **Open notes text** for separate notes-only text files (up to 5 MB on import). The notes editor supports plain text, dot bullets and five outline levels: I., A., 1., a., i. Enter continues a list; Enter on an empty item exits it. Indent and Outdent switch outline levels.
+
+## Usage and rights
+
+Copyright (c) 2026 Huma Barker. All rights reserved. This repository is publicly viewable, but its source code is not offered under an open-source license. Visitors may use the authorized hosted app for personal, noncommercial purposes; permission is required to reuse, modify, redistribute, commercially exploit, or separately host the code, subject to applicable law and GitHub’s terms. See [LICENSE](LICENSE). Third-party libraries retain their own licenses. Users retain their rights in their reading material, notes, and drawings.
