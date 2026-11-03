@@ -1,4 +1,4 @@
-# Huma’s Speed Reader
+# Huma Speed Reading & Comprehension Learning Program
 
 A browser app for iPhone, iPad, and desktop. Import a PDF or paste text, start at the cursor, and read 1–8 words at a time at an adjustable words-per-minute rate. Includes continuous lined notes with typing, optional bullets, and handwriting with PNG export.
 
