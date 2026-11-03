@@ -231,7 +231,7 @@ $('file-input').addEventListener('change',async e=>{
   }catch(err){fileStatus.textContent=`⚠️ ${err.message||'Unable to open this PDF.'} If this file opens in Files but not here, try opening this app in Safari instead of an in-app preview.`;}
   finally{e.target.value='';}
 });
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&!['TEXTAREA','INPUT','BUTTON'].includes(document.activeElement?.tagName)){e.preventDefault();if(isPlaying)pause();else readFromCursor()}});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&!['TEXTAREA','INPUT','BUTTON','SELECT'].includes(document.activeElement?.tagName)){e.preventDefault();if(isPlaying)pause();else readFromCursor()}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&isPlaying)pause()});
 // Drawing — vector-style stroke storage ensures no quality loss or cut-off on resize.
 const canvas=$('paint-canvas'),ctx=canvas.getContext('2d');let color='#ff3b30',width=4,strokes=[],active=null,pointerId=null;
