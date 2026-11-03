@@ -31,6 +31,7 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 #handwriting-panel .canvas-wrap{height:640px;border:0;border-radius:0;background:transparent}
 .notes-mode[aria-pressed="true"]{background:#2563eb;color:#fff}
 .notes-section{min-width:0}
+.palette-group{margin:12px 0}.palette-label{font-size:.88rem;font-weight:650}.palette-swatches{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}.palette-swatches .swatch{width:44px;height:44px;min-height:44px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -62,12 +63,12 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 <p id="notes-status" class="help" role="status"></p>
 <div class="notes-paper" id="typing-panel"><label class="sr-only" for="notes-input">Your reading notes</label><textarea id="notes-input" placeholder="Write your notes here…" spellcheck="true"></textarea></div>
 <div id="handwriting-panel" hidden>
-<div class="toolbar" id="palette" aria-label="Pen color">
-<button class="swatch" style="background:#ff3b30" data-color="#ff3b30" aria-label="Red" aria-pressed="true"></button>
-<button class="swatch" style="background:#2563eb" data-color="#2563eb" aria-label="Blue" aria-pressed="false"></button>
-<button class="swatch" style="background:#16a34a" data-color="#16a34a" aria-label="Green" aria-pressed="false"></button>
-<button class="swatch" style="background:#111827" data-color="#111827" aria-label="Black" aria-pressed="false"></button>
-<label for="custom-color" class="sr-only">Custom pen color</label><input id="custom-color" class="color-input" type="color" value="#ff3b30" title="Custom pen color">
+<div id="palette" role="group" aria-label="Pen colors">
+<div class="palette-group" role="group" aria-label="Primary colors"><span class="palette-label">Primary</span><div class="palette-swatches"><button type="button" class="swatch" style="background:#ff3b30" data-color="#ff3b30" aria-label="Red" title="Red" aria-pressed="true"></button><button type="button" class="swatch" style="background:#facc15" data-color="#facc15" aria-label="Yellow" title="Yellow" aria-pressed="false"></button><button type="button" class="swatch" style="background:#2563eb" data-color="#2563eb" aria-label="Blue" title="Blue" aria-pressed="false"></button></div></div>
+<div class="palette-group" role="group" aria-label="Secondary colors"><span class="palette-label">Secondary</span><div class="palette-swatches"><button type="button" class="swatch" style="background:#f97316" data-color="#f97316" aria-label="Orange" title="Orange" aria-pressed="false"></button><button type="button" class="swatch" style="background:#16a34a" data-color="#16a34a" aria-label="Green" title="Green" aria-pressed="false"></button><button type="button" class="swatch" style="background:#9333ea" data-color="#9333ea" aria-label="Violet" title="Violet" aria-pressed="false"></button></div></div>
+<div class="palette-group" role="group" aria-label="Tertiary colors"><span class="palette-label">Tertiary</span><div class="palette-swatches"><button type="button" class="swatch" style="background:#ea580c" data-color="#ea580c" aria-label="Red-orange" title="Red-orange" aria-pressed="false"></button><button type="button" class="swatch" style="background:#f59e0b" data-color="#f59e0b" aria-label="Yellow-orange" title="Yellow-orange" aria-pressed="false"></button><button type="button" class="swatch" style="background:#84cc16" data-color="#84cc16" aria-label="Yellow-green" title="Yellow-green" aria-pressed="false"></button><button type="button" class="swatch" style="background:#0d9488" data-color="#0d9488" aria-label="Blue-green" title="Blue-green" aria-pressed="false"></button><button type="button" class="swatch" style="background:#4f46e5" data-color="#4f46e5" aria-label="Blue-violet" title="Blue-violet" aria-pressed="false"></button><button type="button" class="swatch" style="background:#db2777" data-color="#db2777" aria-label="Red-violet" title="Red-violet" aria-pressed="false"></button></div></div>
+<div class="toolbar"><span class="palette-label">Custom color</span><label for="custom-color" class="sr-only">Custom pen color</label><input id="custom-color" class="color-input" type="color" value="#ff3b30" title="Custom pen color">
+</div>
 </div>
 <div class="toolbar"><label for="thickness">Thickness <span id="thickness-val">4</span>px</label><input id="thickness" class="range" type="range" min="1" max="30" value="4"><button id="undo-btn" type="button">Undo</button><button id="clear-canvas-btn" type="button">Clear</button><button class="primary" id="save-btn" type="button">Save PNG</button></div>
 <div class="notes-paper"><div class="canvas-wrap"><canvas id="paint-canvas" aria-label="Draw with finger, Apple Pencil, mouse, or trackpad"></canvas></div></div>
