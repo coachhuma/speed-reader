@@ -32,6 +32,12 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 .notes-mode[aria-pressed="true"]{background:#2563eb;color:#fff}
 .notes-section{min-width:0}
 .palette-group{margin:12px 0}.palette-label{font-size:.88rem;font-weight:650}.palette-swatches{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}.palette-swatches .swatch{width:44px;height:44px;min-height:44px;flex-shrink:0}
+
+.compact-palette{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.compact-palette .swatch{width:26px;height:26px;min-height:26px;padding:0;flex-shrink:0}
+.compact-palette .color-input{width:30px;height:28px}
+.reader-select{font:inherit;min-height:44px;border:1px solid #b9c6d7;border-radius:9px;padding:8px;background:white;color:var(--ink)}
+#word-box{font-size:var(--reader-size,48px);font-weight:var(--reader-weight,750)}
 </style>
 </head>
 <body>
@@ -50,11 +56,12 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 <div class="toolbar"><label for="wpm">Words/min</label><input id="wpm" class="wpm" type="number" inputmode="numeric" min="30" max="1200" step="10" value="300"><button id="slower-btn" type="button" aria-label="Slow down">− 25</button><button id="faster-btn" type="button" aria-label="Speed up">+ 25</button></div>
 <div class="toolbar"><label for="chunk-size">Words at a time: <output id="chunk-value" for="chunk-size">1</output></label><span>1</span><input id="chunk-size" class="range" type="range" min="1" max="8" step="1" value="1" aria-describedby="chunk-help"><span>8</span></div>
 <p id="chunk-help" class="help">Start with one word and increase whenever you feel ready. Larger groups stay visible longer to keep the same words per minute.</p>
+<div class="toolbar"><label for="reader-size">Font size: <output id="reader-size-value" for="reader-size">48</output>px</label><input id="reader-size" class="range" type="range" min="24" max="72" step="2" value="48"><label for="reader-weight">Font weight</label><select id="reader-weight" class="reader-select"><option value="300">Thin</option><option value="400">Regular</option><option value="600">Medium</option><option value="750" selected>Bold</option></select></div>
 <div id="word-box" role="status" aria-live="off">Ready to read</div>
 <div class="progress-wrap" aria-label="Reading progress"><div id="progress" class="progress"></div></div>
 <div class="meta"><span id="counter">0 / 0 words</span><span id="percentage">0%</span></div>
-<div class="toolbar"><button class="primary grow" id="play-btn" type="button">▶ Start Reading</button><button id="cursor-btn" type="button">▶ Read from cursor</button><button id="back-btn" type="button">↶ Back 10</button><button id="restart-btn" type="button">↺ Restart</button></div>
-<p class="help">After importing a PDF, scroll in the text box above and tap a word to place the cursor. Tap “Read from cursor” to skip straight there. Selecting text starts at the first selected word. Start/Pause resumes your reading position; Restart goes back to the beginning.</p>
+<div class="toolbar"><button class="primary grow" id="cursor-btn" type="button">▶ Read from cursor</button><button id="play-btn" type="button">▶ Start / Resume</button><button id="back-btn" type="button">↶ Back 10</button><button id="restart-btn" type="button">↺ Restart</button></div>
+<p class="help">After importing a PDF, scroll in the text box above and tap a word to place the cursor. Tap “Read from cursor” to skip straight there. Selecting text starts at the first selected word. The blue button starts at your cursor and pauses while reading. Start / Resume continues your reading position; Restart goes back to the beginning.</p>
 </section>
 <section class="notes-section" aria-label="Reading notes">
 <h2>📝 Reading Notes</h2>
@@ -63,13 +70,7 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 <p id="notes-status" class="help" role="status"></p>
 <div class="notes-paper" id="typing-panel"><label class="sr-only" for="notes-input">Your reading notes</label><textarea id="notes-input" placeholder="Write your notes here…" spellcheck="true"></textarea></div>
 <div id="handwriting-panel" hidden>
-<div id="palette" role="group" aria-label="Pen colors">
-<div class="palette-group" role="group" aria-label="Primary colors"><span class="palette-label">Primary</span><div class="palette-swatches"><button type="button" class="swatch" style="background:#ff3b30" data-color="#ff3b30" aria-label="Red" title="Red" aria-pressed="true"></button><button type="button" class="swatch" style="background:#facc15" data-color="#facc15" aria-label="Yellow" title="Yellow" aria-pressed="false"></button><button type="button" class="swatch" style="background:#2563eb" data-color="#2563eb" aria-label="Blue" title="Blue" aria-pressed="false"></button></div></div>
-<div class="palette-group" role="group" aria-label="Secondary colors"><span class="palette-label">Secondary</span><div class="palette-swatches"><button type="button" class="swatch" style="background:#f97316" data-color="#f97316" aria-label="Orange" title="Orange" aria-pressed="false"></button><button type="button" class="swatch" style="background:#16a34a" data-color="#16a34a" aria-label="Green" title="Green" aria-pressed="false"></button><button type="button" class="swatch" style="background:#9333ea" data-color="#9333ea" aria-label="Violet" title="Violet" aria-pressed="false"></button></div></div>
-<div class="palette-group" role="group" aria-label="Tertiary colors"><span class="palette-label">Tertiary</span><div class="palette-swatches"><button type="button" class="swatch" style="background:#ea580c" data-color="#ea580c" aria-label="Red-orange" title="Red-orange" aria-pressed="false"></button><button type="button" class="swatch" style="background:#f59e0b" data-color="#f59e0b" aria-label="Yellow-orange" title="Yellow-orange" aria-pressed="false"></button><button type="button" class="swatch" style="background:#84cc16" data-color="#84cc16" aria-label="Yellow-green" title="Yellow-green" aria-pressed="false"></button><button type="button" class="swatch" style="background:#0d9488" data-color="#0d9488" aria-label="Blue-green" title="Blue-green" aria-pressed="false"></button><button type="button" class="swatch" style="background:#4f46e5" data-color="#4f46e5" aria-label="Blue-violet" title="Blue-violet" aria-pressed="false"></button><button type="button" class="swatch" style="background:#db2777" data-color="#db2777" aria-label="Red-violet" title="Red-violet" aria-pressed="false"></button></div></div>
-<div class="toolbar"><span class="palette-label">Custom color</span><label for="custom-color" class="sr-only">Custom pen color</label><input id="custom-color" class="color-input" type="color" value="#ff3b30" title="Custom pen color">
-</div>
-</div>
+<div id="palette" class="compact-palette" role="group" aria-label="Pen colors: primary, secondary and tertiary"><button type="button" class="swatch" style="background:#ff3b30" data-color="#ff3b30" aria-label="Red" title="Red" aria-pressed="true"></button><button type="button" class="swatch" style="background:#facc15" data-color="#facc15" aria-label="Yellow" title="Yellow" aria-pressed="false"></button><button type="button" class="swatch" style="background:#2563eb" data-color="#2563eb" aria-label="Blue" title="Blue" aria-pressed="false"></button><button type="button" class="swatch" style="background:#f97316" data-color="#f97316" aria-label="Orange" title="Orange" aria-pressed="false"></button><button type="button" class="swatch" style="background:#16a34a" data-color="#16a34a" aria-label="Green" title="Green" aria-pressed="false"></button><button type="button" class="swatch" style="background:#9333ea" data-color="#9333ea" aria-label="Violet" title="Violet" aria-pressed="false"></button><button type="button" class="swatch" style="background:#ea580c" data-color="#ea580c" aria-label="Red-orange" title="Red-orange" aria-pressed="false"></button><button type="button" class="swatch" style="background:#f59e0b" data-color="#f59e0b" aria-label="Yellow-orange" title="Yellow-orange" aria-pressed="false"></button><button type="button" class="swatch" style="background:#84cc16" data-color="#84cc16" aria-label="Yellow-green" title="Yellow-green" aria-pressed="false"></button><button type="button" class="swatch" style="background:#0d9488" data-color="#0d9488" aria-label="Blue-green" title="Blue-green" aria-pressed="false"></button><button type="button" class="swatch" style="background:#4f46e5" data-color="#4f46e5" aria-label="Blue-violet" title="Blue-violet" aria-pressed="false"></button><button type="button" class="swatch" style="background:#db2777" data-color="#db2777" aria-label="Red-violet" title="Red-violet" aria-pressed="false"></button><label for="custom-color" class="sr-only">Custom pen color</label><input id="custom-color" class="color-input" type="color" value="#ff3b30" title="Custom pen color"></div>
 <div class="toolbar"><label for="thickness">Thickness <span id="thickness-val">4</span>px</label><input id="thickness" class="range" type="range" min="1" max="30" value="4"><button id="undo-btn" type="button">Undo</button><button id="clear-canvas-btn" type="button">Clear</button><button class="primary" id="save-btn" type="button">Save PNG</button></div>
 <div class="notes-paper"><div class="canvas-wrap"><canvas id="paint-canvas" aria-label="Draw with finger, Apple Pencil, mouse, or trackpad"></canvas></div></div>
 <div class="toolbar"><button id="more-paper" type="button">＋ More lined paper</button></div>
@@ -100,17 +101,20 @@ requestAnimationFrame(fitNotes);window.addEventListener('resize',()=>{if(!$('typ
 // Reader
 let words=[],currentIdx=0,sourceText='',isPlaying=false,timer=null;
 const input=$('text-input'),wordBox=$('word-box'),playBtn=$('play-btn');
+function updateReaderFont(){const size=$('reader-size').value,weight=$('reader-weight').value;wordBox.style.setProperty('--reader-size',size+'px');wordBox.style.setProperty('--reader-weight',weight);$('reader-size-value').textContent=size}
+$('reader-size').addEventListener('input',updateReaderFont);$('reader-weight').addEventListener('change',updateReaderFont);
+function updateCursorButton(){$('cursor-btn').textContent=isPlaying?'Ⅱ Pause':'▶ Read from cursor'}
 function normalText(){return input.value.trim().replace(/\s+/g,' ')}
 function rate(){const raw=parseInt($('wpm').value,10);const result=Number.isFinite(raw)?Math.max(30,Math.min(1200,raw)):300;$('wpm').value=result;return result}
 function chunkSize(){return Math.max(1,Math.min(8,parseInt($('chunk-size').value,10)||1))}
 $('chunk-size').addEventListener('input',()=>{$('chunk-value').textContent=chunkSize()});
 function stopTimer(){if(timer!==null){clearTimeout(timer);timer=null}}
-function progress(){const n=words.length,p=n?Math.round(currentIdx/n*100):0;$('counter').textContent=`${currentIdx} / ${n} words`;$('percentage').textContent=`${p}%`;$('progress').style.width=`${p}%`}
-function pause(){stopTimer();isPlaying=false;playBtn.textContent=currentIdx>=words.length?'▶ Start Reading':'▶ Resume'}
+function progress(){updateCursorButton();const n=words.length,p=n?Math.round(currentIdx/n*100):0;$('counter').textContent=`${currentIdx} / ${n} words`;$('percentage').textContent=`${p}%`;$('progress').style.width=`${p}%`}
+function pause(){stopTimer();isPlaying=false;updateCursorButton();playBtn.textContent=currentIdx>=words.length?'▶ Start Reading':'▶ Resume'}
 function showNext(){if(!isPlaying)return;if(currentIdx>=words.length){stopTimer();isPlaying=false;playBtn.textContent='▶ Start Reading';wordBox.textContent='Finished';progress();return}const group=words.slice(currentIdx,currentIdx+chunkSize());wordBox.textContent=group.join(' ');currentIdx+=group.length;progress();timer=setTimeout(showNext,60000*group.length/rate())}
 function syncWords(){const text=normalText();if(text!==sourceText){sourceText=text;words=text?text.split(' '):[];currentIdx=0;progress()}return !!text}
 function toggleReader(){if(isPlaying){pause();return}if(!syncWords()){wordBox.textContent='Paste or import text first';input.focus();return}if(currentIdx>=words.length)currentIdx=0;isPlaying=true;playBtn.textContent='Ⅱ Pause';showNext()}
-function restart(){stopTimer();isPlaying=false;syncWords();currentIdx=0;wordBox.textContent='Ready to read';playBtn.textContent='▶ Start Reading';progress()}
+function restart(){stopTimer();isPlaying=false;syncWords();input.setSelectionRange(0,0);currentIdx=0;wordBox.textContent='Ready to read';playBtn.textContent='▶ Start Reading';progress()}
 // Map the original text's character offsets to reader words, preserving PDF whitespace.
 function wordIndexAtCursor(text,offset){
   const tokens=text.matchAll(/\S+/g); let index=0;
@@ -118,6 +122,7 @@ function wordIndexAtCursor(text,offset){
   return index;
 }
 function readFromCursor(){
+  if(isPlaying){pause();return}
   const offset=input.selectionStart;
   pause();
   if(!syncWords()){wordBox.textContent='Paste or import text first';input.focus();return}
@@ -226,7 +231,7 @@ $('file-input').addEventListener('change',async e=>{
   }catch(err){fileStatus.textContent=`⚠️ ${err.message||'Unable to open this PDF.'} If this file opens in Files but not here, try opening this app in Safari instead of an in-app preview.`;}
   finally{e.target.value='';}
 });
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&!['TEXTAREA','INPUT','BUTTON'].includes(document.activeElement?.tagName)){e.preventDefault();toggleReader()}});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&!['TEXTAREA','INPUT','BUTTON'].includes(document.activeElement?.tagName)){e.preventDefault();if(isPlaying)pause();else readFromCursor()}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&isPlaying)pause()});
 // Drawing — vector-style stroke storage ensures no quality loss or cut-off on resize.
 const canvas=$('paint-canvas'),ctx=canvas.getContext('2d');let color='#ff3b30',width=4,strokes=[],active=null,pointerId=null;
