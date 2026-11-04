@@ -38,10 +38,42 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 .compact-palette .color-input{width:30px;height:28px}
 .reader-select{font:inherit;min-height:44px;border:1px solid #b9c6d7;border-radius:9px;padding:8px;background:white;color:var(--ink)}
 #word-box{font-size:var(--reader-size,48px);font-weight:var(--reader-weight,750)}
+/* Huma's illustrated identity: an open book and a bird taking flight. */
+.huma-banner{position:relative;overflow:hidden;background:radial-gradient(ellipse at 85% 30%,#244f57 0,transparent 55%),linear-gradient(115deg,#101c30,#142c3a);padding:24px max(20px,env(safe-area-inset-left));padding-top:max(24px,env(safe-area-inset-top));border-bottom:3px solid #d7b57b}
+.banner-inner{max-width:1168px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:20px;position:relative}
+.banner-copy{min-width:0;position:relative;z-index:1}
+.banner-eyebrow{font-size:.66rem;letter-spacing:.15em;text-transform:uppercase;color:#bdd6d5;display:block;margin-bottom:8px;line-height:1.5}
+.huma-banner h1{margin:0;display:flex;flex-direction:column;align-items:flex-start}
+.huma-wordmark{font-family:Georgia,'Times New Roman',serif;font-size:clamp(3.5rem,7vw,5.4rem);font-weight:400;letter-spacing:-.065em;line-height:1;color:#fff6e5}
+.wordmark-dot{color:#e2be83}
+.program-title{display:block;font-size:clamp(.83rem,1.8vw,1.12rem);font-weight:500;line-height:1.4;letter-spacing:.025em;color:#e4eeed;margin-top:12px}
+.program-label{display:block;text-transform:uppercase;font-size:.63rem;font-weight:600;letter-spacing:.23em;color:#dfbe88;margin-top:7px}
+.banner-art{width:250px;max-width:34%;height:auto;flex-shrink:0}
+@media(max-width:520px){.huma-banner{padding:21px 18px;padding-top:max(21px,env(safe-area-inset-top))}.banner-inner{gap:0}.banner-copy{max-width:78%}.banner-eyebrow{font-size:.55rem;letter-spacing:.1em;max-width:190px}.huma-wordmark{font-size:3.65rem}.program-title{font-size:.81rem;max-width:235px;margin-top:10px}.program-label{font-size:.56rem;letter-spacing:.18em}.banner-art{position:absolute;right:-22px;top:2px;width:140px;max-width:none;opacity:.7;pointer-events:none}.banner-copy{z-index:1}.banner-eyebrow,.program-title,.program-label{position:relative}}
+@media(max-width:350px){.banner-art{right:-38px;opacity:.35}.banner-copy{max-width:95%}}
+
 </style>
 </head>
 <body>
-<header><h1>📖 Huma Speed Reading &amp; Comprehension Learning Program</h1><p>Designed for iPhone, iPad, and Mac — works in Safari and other modern browsers.</p></header>
+<header class="huma-banner">
+<div class="banner-inner">
+<div class="banner-copy"><span class="banner-eyebrow">A little focus. A world of possibility.</span><h1><span class="huma-wordmark">Huma<span class="wordmark-dot">.</span></span><span class="program-title">Speed Reading &amp; Comprehension</span><span class="program-label">Learning Program</span></h1></div>
+<svg class="banner-art" viewBox="0 0 280 200" fill="none" aria-hidden="true" focusable="false">
+<defs><linearGradient id="page-light" x1="64" y1="107" x2="216" y2="186" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF6DC"/><stop offset="1" stop-color="#B3D9D6"/></linearGradient><linearGradient id="wing-gold" x1="105" y1="43" x2="181" y2="133" gradientUnits="userSpaceOnUse"><stop stop-color="#F9DFA2"/><stop offset="1" stop-color="#CC9852"/></linearGradient></defs>
+<circle cx="152" cy="94" r="72" stroke="#94CFC4" stroke-opacity=".12"/><circle cx="152" cy="94" r="58" stroke="#94CFC4" stroke-opacity=".14" stroke-dasharray="2 7"/>
+<circle cx="152" cy="94" r="41" fill="#7EBAB0" fill-opacity=".08"/>
+<path d="M49 143L133 166L229 137L231 154L137 184L47 158Z" fill="#244B55"/>
+<path d="M137 172C109 150 78 144 51 147L58 112C84 110 110 117 137 139C165 115 196 108 222 111L226 146C195 142 166 151 137 172Z" fill="url(#page-light)"/>
+<path d="M137 139V172M66 124C87 125 106 132 122 143M65 134C86 135 103 140 119 151M152 143C171 130 191 124 211 123M155 152C173 140 193 134 212 133" stroke="#3F787B" stroke-opacity=".45" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M138 136C130 105 110 88 86 73C111 72 135 83 145 100C139 72 145 48 168 29C158 61 162 79 175 91C185 79 199 73 218 75C197 90 180 108 168 130C156 122 148 126 138 136Z" fill="url(#wing-gold)"/>
+<path d="M144 119C152 104 157 94 162 78" stroke="#FFF5D7" stroke-opacity=".65" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M69 56V68M63 62H75M216 43V51M212 47H220M238 103V113M233 108H243" stroke="#E5C48D" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="98" cy="34" r="2" fill="#94CFC4"/><circle cx="230" cy="71" r="2" fill="#94CFC4"/><circle cx="57" cy="95" r="1.5" fill="#E5C48D"/>
+<path d="M84 181C120 194 181 192 216 174" stroke="#94CFC4" stroke-opacity=".2" stroke-linecap="round"/>
+</svg>
+</div>
+</header>
+
 <main>
 <section aria-label="Speed reader">
 <h2>📖 Speed Reader</h2>
