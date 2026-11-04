@@ -53,6 +53,7 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 @media(max-width:350px){.banner-art{right:-38px;opacity:.35}.banner-copy{max-width:95%}}
 
 .reader-step{font-size:1rem;margin:4px 0 8px;color:#182238}.reading-steps{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.reading-steps button{flex-basis:150px}.step-help{margin-bottom:12px}
+#word-box.reader-prompt{font-weight:300}
 </style>
 </head>
 <body>
@@ -84,7 +85,7 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 <textarea id="text-input" spellcheck="false" placeholder="Paste text here, or import a PDF. Tap a word to place your cursor where you want to begin."></textarea>
 <div class="reading-steps"><button class="primary grow" id="cursor-btn" type="button">2. Read from cursor</button><button class="primary grow" id="play-btn" type="button">3. Start reading</button></div>
 <p class="help step-help">Tap a word in the text, choose “2. Read from cursor,” then “3. Start reading.”</p>
-<div id="word-box" role="status" aria-live="off">Read “here”</div>
+<div class="reader-prompt" id="word-box" role="status" aria-live="off">Read Here</div>
 <div class="progress-wrap" aria-label="Reading progress"><div id="progress" class="progress"></div></div>
 <div class="meta"><span id="counter">0 / 0 words</span><span id="percentage">0%</span></div>
 <div class="toolbar"><button id="back-btn" type="button">↶ Back 10</button><button id="restart-btn" type="button">↺ Restart</button></div>
@@ -144,6 +145,7 @@ requestAnimationFrame(fitNotes);window.addEventListener('resize',()=>{if(!$('typ
 // Reader
 let words=[],currentIdx=0,sourceText='',isPlaying=false,timer=null;
 const input=$('text-input'),wordBox=$('word-box'),playBtn=$('play-btn');
+function showReaderText(text){wordBox.textContent=text;wordBox.classList.toggle('reader-prompt',text==='Read Here'&&!isPlaying)}
 function updateReaderFont(){const size=$('reader-size').value,weight=$('reader-weight').value;wordBox.style.setProperty('--reader-size',size+'px');wordBox.style.setProperty('--reader-weight',weight);$('reader-size-value').textContent=size}
 $('reader-size').addEventListener('input',updateReaderFont);$('reader-weight').addEventListener('change',updateReaderFont);
 function updateCursorButton(){$('cursor-btn').textContent='2. Read from cursor';playBtn.textContent=isPlaying?'3. Pause':currentIdx>0&&currentIdx<words.length?'3. Resume reading':'3. Start reading'}
@@ -154,10 +156,10 @@ $('chunk-size').addEventListener('input',()=>{$('chunk-value').textContent=chunk
 function stopTimer(){if(timer!==null){clearTimeout(timer);timer=null}}
 function progress(){updateCursorButton();const n=words.length,p=n?Math.round(currentIdx/n*100):0;$('counter').textContent=`${currentIdx} / ${n} words`;$('percentage').textContent=`${p}%`;$('progress').style.width=`${p}%`}
 function pause(){stopTimer();isPlaying=false;updateCursorButton();playBtn.textContent=currentIdx>=words.length?'3. Start reading':'3. Resume reading'}
-function showNext(){if(!isPlaying)return;if(currentIdx>=words.length){stopTimer();isPlaying=false;playBtn.textContent='3. Start reading';wordBox.textContent='Finished';progress();return}const group=words.slice(currentIdx,currentIdx+chunkSize());wordBox.textContent=group.join(' ');currentIdx+=group.length;progress();timer=setTimeout(showNext,60000*group.length/rate())}
+function showNext(){if(!isPlaying)return;if(currentIdx>=words.length){stopTimer();isPlaying=false;playBtn.textContent='3. Start reading';showReaderText('Finished');progress();return}const group=words.slice(currentIdx,currentIdx+chunkSize());showReaderText(group.join(' '));currentIdx+=group.length;progress();timer=setTimeout(showNext,60000*group.length/rate())}
 function syncWords(){const text=normalText();if(text!==sourceText){sourceText=text;words=text?text.split(' '):[];currentIdx=0;progress()}return !!text}
-function toggleReader(){if(isPlaying){pause();return}if(!syncWords()){wordBox.textContent='Paste or import text first';input.focus();return}if(currentIdx>=words.length)currentIdx=0;isPlaying=true;playBtn.textContent='3. Pause';showNext()}
-function restart(){stopTimer();isPlaying=false;syncWords();input.setSelectionRange(0,0);currentIdx=0;wordBox.textContent='Read “here”';playBtn.textContent='3. Start reading';progress()}
+function toggleReader(){if(isPlaying){pause();return}if(!syncWords()){showReaderText('Paste or import text first');input.focus();return}if(currentIdx>=words.length)currentIdx=0;isPlaying=true;playBtn.textContent='3. Pause';showNext()}
+function restart(){stopTimer();isPlaying=false;syncWords();input.setSelectionRange(0,0);currentIdx=0;showReaderText('Read Here');playBtn.textContent='3. Start reading';progress()}
 // Map the original text's character offsets to reader words, preserving PDF whitespace.
 function wordIndexAtCursor(text,offset){
   const tokens=text.matchAll(/\S+/g); let index=0;
@@ -167,18 +169,18 @@ function wordIndexAtCursor(text,offset){
 function readFromCursor(){
   const offset=input.selectionStart;
   pause();
-  if(!syncWords()){wordBox.textContent='Paste or import text first';input.focus();return}
+  if(!syncWords()){showReaderText('Paste or import text first');input.focus();return}
   currentIdx=wordIndexAtCursor(input.value,offset);
-  if(currentIdx>=words.length){wordBox.textContent='Cursor is at the end — tap an earlier word';progress();return}
-  wordBox.textContent=words.slice(currentIdx,currentIdx+chunkSize()).join(' ');progress();playBtn.textContent='3. Start reading';
+  if(currentIdx>=words.length){showReaderText('Cursor is at the end — tap an earlier word');progress();return}
+  showReaderText(words.slice(currentIdx,currentIdx+chunkSize()).join(' '));progress();playBtn.textContent='3. Start reading';
 }
 $('cursor-btn').addEventListener('click',readFromCursor);
 playBtn.addEventListener('click',toggleReader);$('restart-btn').addEventListener('click',restart);
-$('back-btn').addEventListener('click',()=>{pause();syncWords();currentIdx=Math.max(0,currentIdx-10);wordBox.textContent=currentIdx?words[currentIdx-1]:'Read “here”';progress()});
+$('back-btn').addEventListener('click',()=>{pause();syncWords();currentIdx=Math.max(0,currentIdx-10);showReaderText(currentIdx?words[currentIdx-1]:'Read Here');progress()});
 $('slower-btn').addEventListener('click',()=>{$('wpm').value=Math.max(30,rate()-25)});
 $('faster-btn').addEventListener('click',()=>{$('wpm').value=Math.min(1200,rate()+25)});
 $('wpm').addEventListener('change',rate);
-input.addEventListener('input',()=>{pause();syncWords();wordBox.textContent='Read “here”';playBtn.textContent='3. Start reading'});
+input.addEventListener('input',()=>{pause();syncWords();showReaderText('Read Here');playBtn.textContent='3. Start reading'});
 $('clear-text-btn').addEventListener('click',()=>{input.value='';restart()});
 $('sample-btn').addEventListener('click',()=>{input.value='Reading becomes easier with practice. The speed reader presents words one at a time so your eyes can stay focused. Try adjusting the reading speed until it feels comfortable.';restart()});
 // Native Apple Files picker supports iCloud and installed third-party file providers.
@@ -269,7 +271,7 @@ $('file-input').addEventListener('change',async e=>{
     if(String.fromCharCode(...header)!=='%PDF-')throw new Error('This file does not appear to be a valid PDF.');
     const text=(await extractBook(file)).replace(/\u00ad/g,'').trim();
     if(!text)throw new Error('No selectable text found. Scanned/image-only PDFs require OCR, which is not included.');
-    input.value=text;restart();fileStatus.textContent=`✅ Loaded ${file.name} — ${words.length.toLocaleString()} words. Read “here”.`;
+    input.value=text;restart();fileStatus.textContent=`✅ Loaded ${file.name} — ${words.length.toLocaleString()} words. Read Here.`;
   }catch(err){fileStatus.textContent=`⚠️ ${err.message||'Unable to open this PDF.'} If this file opens in Files but not here, try opening this app in Safari instead of an in-app preview.`;}
   finally{e.target.value='';}
 });
@@ -327,7 +329,7 @@ $('open-session').addEventListener('change',async e=>{const file=e.target.files?
  const data=validateSession(JSON.parse(text.slice(SESSION_HEADER.length)));
  input.value=data.text;sourceText='';syncWords();currentIdx=Math.min(data.position,words.length);notes.value=data.notes;fitNotes();saveNotes();strokes=data.drawing.strokes;canvas.parentElement.style.height=data.drawing.height+'px';saveDrawing();
  const prefs=data.settings||{};$('wpm').value=Math.max(30,Math.min(1200,Number(prefs.wpm)||300));$('chunk-size').value=Math.max(1,Math.min(8,Number(prefs.chunk)||1));$('chunk-value').textContent=chunkSize();$('reader-size').value=Math.max(24,Math.min(72,Number(prefs.size)||48));$('reader-weight').value=['300','400','600','750'].includes(String(prefs.weight))?String(prefs.weight):'750';updateReaderFont();noteStyle=['none','dot','0','1','2','3','4'].includes(data.outline)?data.outline:'none';$('note-style').value=noteStyle;
- let offset=input.value.length,index=0;for(const token of input.value.matchAll(/\S+/g)){if(index++===currentIdx){offset=token.index;break}}input.setSelectionRange(offset,offset);wordBox.textContent=currentIdx>=words.length?'Finished':words.slice(currentIdx,currentIdx+chunkSize()).join(' ')||'Read “here”';playBtn.textContent='3. Resume reading';progress();requestAnimationFrame(resize);$('session-status').textContent=`Restored reading text, notes and place (${currentIdx} / ${words.length} words). Tap “3. Start reading” to continue.`;
+ let offset=input.value.length,index=0;for(const token of input.value.matchAll(/\S+/g)){if(index++===currentIdx){offset=token.index;break}}input.setSelectionRange(offset,offset);showReaderText(currentIdx>=words.length?'Finished':words.slice(currentIdx,currentIdx+chunkSize()).join(' ')||'Read Here');playBtn.textContent='3. Resume reading';progress();requestAnimationFrame(resize);$('session-status').textContent=`Restored reading text, notes and place (${currentIdx} / ${words.length} words). Tap “3. Start reading” to continue.`;
  }catch(err){$('session-status').textContent='Could not open file: '+err.message}finally{e.target.value=''}});
 
 if('ResizeObserver'in window)new ResizeObserver(resize).observe(canvas);window.addEventListener('resize',resize);window.addEventListener('orientationchange',resize);requestAnimationFrame(resize);
