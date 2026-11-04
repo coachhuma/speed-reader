@@ -52,6 +52,7 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 @media(max-width:520px){.huma-banner{padding:21px 18px;padding-top:max(21px,env(safe-area-inset-top))}.banner-inner{gap:0}.banner-copy{max-width:78%}.banner-eyebrow{font-size:.55rem;letter-spacing:.1em;max-width:190px}.huma-wordmark{font-size:3.65rem}.program-title{font-size:.81rem;max-width:235px;margin-top:10px}.program-label{font-size:.56rem;letter-spacing:.18em}.banner-art{position:absolute;right:-22px;top:2px;width:140px;max-width:none;opacity:.7;pointer-events:none}.banner-copy{z-index:1}.banner-eyebrow,.program-title,.program-label{position:relative}}
 @media(max-width:350px){.banner-art{right:-38px;opacity:.35}.banner-copy{max-width:95%}}
 
+.reader-step{font-size:1rem;margin:4px 0 8px;color:#182238}.reading-steps{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.reading-steps button{flex-basis:150px}.step-help{margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -77,25 +78,23 @@ button,.file-label{font:inherit;border:1px solid var(--border);background:white;
 <main>
 <section aria-label="Speed reader">
 <h2>📖 Speed Reader</h2>
-<label for="text-input">Reading text — tap where you want to begin</label>
-<textarea id="text-input" spellcheck="false" placeholder="Paste text here or tap Import PDF…"></textarea>
-<div class="toolbar">
-<label class="pdf-picker">📄 Import PDF<input aria-label="Import PDF from Files" id="file-input" type="file" accept=".pdf,application/pdf"></label>
-<button id="sample-btn" type="button">Try sample</button>
-<button id="clear-text-btn" type="button">Clear text</button>
-</div>
-<div class="toolbar"><button id="save-session" type="button">Save reading + notes to device</button><label class="pdf-picker">Open saved / text file<input id="open-session" type="file" accept=".txt,.json,text/plain,application/json" aria-label="Open saved reading and notes or plain text file"></label></div>
-<p id="session-status" class="help" role="status">Save a text file with your reading text, place, typed notes and handwriting. On iPhone, choose Save to Files → On My iPhone in the share sheet. No PDF or app code is included. Open it here next time; save a new copy after changes.</p>
-<p id="file-status" class="help" role="status">Tap Import PDF → Browse → choose a PDF from iCloud Drive, Google Drive, OneDrive, or On My iPhone/iPad. A network connection is needed to load the PDF text extractor. Scanned PDFs without a text layer are not supported.</p>
+<h3 class="reader-step">1. Import PDF or paste text</h3>
+<div class="toolbar"><label class="pdf-picker">📄 Import PDF<input aria-label="Import PDF from Files" id="file-input" type="file" accept=".pdf,application/pdf"></label><button id="sample-btn" type="button">Try sample</button><button id="clear-text-btn" type="button">Clear text</button></div>
+<label for="text-input" class="sr-only">Paste reading text, then place your cursor where you want to begin</label>
+<textarea id="text-input" spellcheck="false" placeholder="Paste text here, or import a PDF. Tap a word to place your cursor where you want to begin."></textarea>
+<div class="reading-steps"><button class="primary grow" id="cursor-btn" type="button">2. Read from cursor</button><button class="primary grow" id="play-btn" type="button">3. Start reading</button></div>
+<p class="help step-help">Tap a word in the text, choose “2. Read from cursor,” then “3. Start reading.”</p>
+<div id="word-box" role="status" aria-live="off">Read “here”</div>
+<div class="progress-wrap" aria-label="Reading progress"><div id="progress" class="progress"></div></div>
+<div class="meta"><span id="counter">0 / 0 words</span><span id="percentage">0%</span></div>
+<div class="toolbar"><button id="back-btn" type="button">↶ Back 10</button><button id="restart-btn" type="button">↺ Restart</button></div>
 <div class="toolbar"><label for="wpm">Words/min</label><input id="wpm" class="wpm" type="number" inputmode="numeric" min="30" max="1200" step="10" value="300"><button id="slower-btn" type="button" aria-label="Slow down">− 25</button><button id="faster-btn" type="button" aria-label="Speed up">+ 25</button></div>
 <div class="toolbar"><label for="chunk-size">Words at a time: <output id="chunk-value" for="chunk-size">1</output></label><span>1</span><input id="chunk-size" class="range" type="range" min="1" max="8" step="1" value="1" aria-describedby="chunk-help"><span>8</span></div>
 <p id="chunk-help" class="help">Start with one word and increase whenever you feel ready. Larger groups stay visible longer to keep the same words per minute.</p>
 <div class="toolbar"><label for="reader-size">Font size: <output id="reader-size-value" for="reader-size">48</output>px</label><input id="reader-size" class="range" type="range" min="24" max="72" step="2" value="48"><label for="reader-weight">Font weight</label><select id="reader-weight" class="reader-select"><option value="300">Thin</option><option value="400">Regular</option><option value="600">Medium</option><option value="750" selected>Bold</option></select></div>
-<div id="word-box" role="status" aria-live="off">Ready to read</div>
-<div class="progress-wrap" aria-label="Reading progress"><div id="progress" class="progress"></div></div>
-<div class="meta"><span id="counter">0 / 0 words</span><span id="percentage">0%</span></div>
-<div class="toolbar"><button class="primary grow" id="cursor-btn" type="button">▶ Read from cursor</button><button id="play-btn" type="button">▶ Start / Resume</button><button id="back-btn" type="button">↶ Back 10</button><button id="restart-btn" type="button">↺ Restart</button></div>
-<p class="help">After importing a PDF, scroll in the text box above and tap a word to place the cursor. Tap “Read from cursor” to skip straight there. Selecting text starts at the first selected word. The blue button starts at your cursor and pauses while reading. Start / Resume continues your reading position; Restart goes back to the beginning.</p>
+<div class="toolbar"><button id="save-session" type="button">Save reading + notes to device</button><label class="pdf-picker">Open saved / text file<input id="open-session" type="file" accept=".txt,.json,text/plain,application/json" aria-label="Open saved reading and notes or plain text file"></label></div>
+<p id="session-status" class="help" role="status">Save a text file with your reading text, place, typed notes and handwriting. On iPhone, choose Save to Files → On My iPhone in the share sheet. No PDF or app code is included. Open it here next time; save a new copy after changes.</p>
+<p id="file-status" class="help" role="status">Tap Import PDF → Browse → choose a PDF from iCloud Drive, Google Drive, OneDrive, or On My iPhone/iPad. A network connection is needed to load the PDF text extractor. Scanned PDFs without a text layer are not supported.</p>
 </section>
 <section class="notes-section" aria-label="Reading notes">
 <h2>📝 Reading Notes</h2>
@@ -147,18 +146,18 @@ let words=[],currentIdx=0,sourceText='',isPlaying=false,timer=null;
 const input=$('text-input'),wordBox=$('word-box'),playBtn=$('play-btn');
 function updateReaderFont(){const size=$('reader-size').value,weight=$('reader-weight').value;wordBox.style.setProperty('--reader-size',size+'px');wordBox.style.setProperty('--reader-weight',weight);$('reader-size-value').textContent=size}
 $('reader-size').addEventListener('input',updateReaderFont);$('reader-weight').addEventListener('change',updateReaderFont);
-function updateCursorButton(){$('cursor-btn').textContent=isPlaying?'Ⅱ Pause':'▶ Read from cursor'}
+function updateCursorButton(){$('cursor-btn').textContent='2. Read from cursor';playBtn.textContent=isPlaying?'3. Pause':currentIdx>0&&currentIdx<words.length?'3. Resume reading':'3. Start reading'}
 function normalText(){return input.value.trim().replace(/\s+/g,' ')}
 function rate(){const raw=parseInt($('wpm').value,10);const result=Number.isFinite(raw)?Math.max(30,Math.min(1200,raw)):300;$('wpm').value=result;return result}
 function chunkSize(){return Math.max(1,Math.min(8,parseInt($('chunk-size').value,10)||1))}
 $('chunk-size').addEventListener('input',()=>{$('chunk-value').textContent=chunkSize()});
 function stopTimer(){if(timer!==null){clearTimeout(timer);timer=null}}
 function progress(){updateCursorButton();const n=words.length,p=n?Math.round(currentIdx/n*100):0;$('counter').textContent=`${currentIdx} / ${n} words`;$('percentage').textContent=`${p}%`;$('progress').style.width=`${p}%`}
-function pause(){stopTimer();isPlaying=false;updateCursorButton();playBtn.textContent=currentIdx>=words.length?'▶ Start Reading':'▶ Resume'}
-function showNext(){if(!isPlaying)return;if(currentIdx>=words.length){stopTimer();isPlaying=false;playBtn.textContent='▶ Start Reading';wordBox.textContent='Finished';progress();return}const group=words.slice(currentIdx,currentIdx+chunkSize());wordBox.textContent=group.join(' ');currentIdx+=group.length;progress();timer=setTimeout(showNext,60000*group.length/rate())}
+function pause(){stopTimer();isPlaying=false;updateCursorButton();playBtn.textContent=currentIdx>=words.length?'3. Start reading':'3. Resume reading'}
+function showNext(){if(!isPlaying)return;if(currentIdx>=words.length){stopTimer();isPlaying=false;playBtn.textContent='3. Start reading';wordBox.textContent='Finished';progress();return}const group=words.slice(currentIdx,currentIdx+chunkSize());wordBox.textContent=group.join(' ');currentIdx+=group.length;progress();timer=setTimeout(showNext,60000*group.length/rate())}
 function syncWords(){const text=normalText();if(text!==sourceText){sourceText=text;words=text?text.split(' '):[];currentIdx=0;progress()}return !!text}
-function toggleReader(){if(isPlaying){pause();return}if(!syncWords()){wordBox.textContent='Paste or import text first';input.focus();return}if(currentIdx>=words.length)currentIdx=0;isPlaying=true;playBtn.textContent='Ⅱ Pause';showNext()}
-function restart(){stopTimer();isPlaying=false;syncWords();input.setSelectionRange(0,0);currentIdx=0;wordBox.textContent='Ready to read';playBtn.textContent='▶ Start Reading';progress()}
+function toggleReader(){if(isPlaying){pause();return}if(!syncWords()){wordBox.textContent='Paste or import text first';input.focus();return}if(currentIdx>=words.length)currentIdx=0;isPlaying=true;playBtn.textContent='3. Pause';showNext()}
+function restart(){stopTimer();isPlaying=false;syncWords();input.setSelectionRange(0,0);currentIdx=0;wordBox.textContent='Read “here”';playBtn.textContent='3. Start reading';progress()}
 // Map the original text's character offsets to reader words, preserving PDF whitespace.
 function wordIndexAtCursor(text,offset){
   const tokens=text.matchAll(/\S+/g); let index=0;
@@ -166,21 +165,20 @@ function wordIndexAtCursor(text,offset){
   return index;
 }
 function readFromCursor(){
-  if(isPlaying){pause();return}
   const offset=input.selectionStart;
   pause();
   if(!syncWords()){wordBox.textContent='Paste or import text first';input.focus();return}
   currentIdx=wordIndexAtCursor(input.value,offset);
   if(currentIdx>=words.length){wordBox.textContent='Cursor is at the end — tap an earlier word';progress();return}
-  isPlaying=true;playBtn.textContent='Ⅱ Pause';showNext();
+  wordBox.textContent=words.slice(currentIdx,currentIdx+chunkSize()).join(' ');progress();playBtn.textContent='3. Start reading';
 }
 $('cursor-btn').addEventListener('click',readFromCursor);
 playBtn.addEventListener('click',toggleReader);$('restart-btn').addEventListener('click',restart);
-$('back-btn').addEventListener('click',()=>{pause();syncWords();currentIdx=Math.max(0,currentIdx-10);wordBox.textContent=currentIdx?words[currentIdx-1]:'Ready to read';progress()});
+$('back-btn').addEventListener('click',()=>{pause();syncWords();currentIdx=Math.max(0,currentIdx-10);wordBox.textContent=currentIdx?words[currentIdx-1]:'Read “here”';progress()});
 $('slower-btn').addEventListener('click',()=>{$('wpm').value=Math.max(30,rate()-25)});
 $('faster-btn').addEventListener('click',()=>{$('wpm').value=Math.min(1200,rate()+25)});
 $('wpm').addEventListener('change',rate);
-input.addEventListener('input',()=>{pause();syncWords();wordBox.textContent='Ready to read';playBtn.textContent='▶ Start Reading'});
+input.addEventListener('input',()=>{pause();syncWords();wordBox.textContent='Read “here”';playBtn.textContent='3. Start reading'});
 $('clear-text-btn').addEventListener('click',()=>{input.value='';restart()});
 $('sample-btn').addEventListener('click',()=>{input.value='Reading becomes easier with practice. The speed reader presents words one at a time so your eyes can stay focused. Try adjusting the reading speed until it feels comfortable.';restart()});
 // Native Apple Files picker supports iCloud and installed third-party file providers.
@@ -271,11 +269,11 @@ $('file-input').addEventListener('change',async e=>{
     if(String.fromCharCode(...header)!=='%PDF-')throw new Error('This file does not appear to be a valid PDF.');
     const text=(await extractBook(file)).replace(/\u00ad/g,'').trim();
     if(!text)throw new Error('No selectable text found. Scanned/image-only PDFs require OCR, which is not included.');
-    input.value=text;restart();fileStatus.textContent=`✅ Loaded ${file.name} — ${words.length.toLocaleString()} words. Ready to read.`;
+    input.value=text;restart();fileStatus.textContent=`✅ Loaded ${file.name} — ${words.length.toLocaleString()} words. Read “here”.`;
   }catch(err){fileStatus.textContent=`⚠️ ${err.message||'Unable to open this PDF.'} If this file opens in Files but not here, try opening this app in Safari instead of an in-app preview.`;}
   finally{e.target.value='';}
 });
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&!['TEXTAREA','INPUT','BUTTON','SELECT'].includes(document.activeElement?.tagName)){e.preventDefault();if(isPlaying)pause();else readFromCursor()}});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&!['TEXTAREA','INPUT','BUTTON','SELECT'].includes(document.activeElement?.tagName)){e.preventDefault();toggleReader()}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&isPlaying)pause()});
 // Drawing — vector-style stroke storage ensures no quality loss or cut-off on resize.
 const canvas=$('paint-canvas'),ctx=canvas.getContext('2d');let color='#ff3b30',width=4,strokes=[],active=null,pointerId=null;
@@ -329,7 +327,7 @@ $('open-session').addEventListener('change',async e=>{const file=e.target.files?
  const data=validateSession(JSON.parse(text.slice(SESSION_HEADER.length)));
  input.value=data.text;sourceText='';syncWords();currentIdx=Math.min(data.position,words.length);notes.value=data.notes;fitNotes();saveNotes();strokes=data.drawing.strokes;canvas.parentElement.style.height=data.drawing.height+'px';saveDrawing();
  const prefs=data.settings||{};$('wpm').value=Math.max(30,Math.min(1200,Number(prefs.wpm)||300));$('chunk-size').value=Math.max(1,Math.min(8,Number(prefs.chunk)||1));$('chunk-value').textContent=chunkSize();$('reader-size').value=Math.max(24,Math.min(72,Number(prefs.size)||48));$('reader-weight').value=['300','400','600','750'].includes(String(prefs.weight))?String(prefs.weight):'750';updateReaderFont();noteStyle=['none','dot','0','1','2','3','4'].includes(data.outline)?data.outline:'none';$('note-style').value=noteStyle;
- let offset=input.value.length,index=0;for(const token of input.value.matchAll(/\S+/g)){if(index++===currentIdx){offset=token.index;break}}input.setSelectionRange(offset,offset);wordBox.textContent=currentIdx>=words.length?'Finished':words.slice(currentIdx,currentIdx+chunkSize()).join(' ')||'Ready to read';playBtn.textContent='▶ Resume';progress();requestAnimationFrame(resize);$('session-status').textContent=`Restored reading text, notes and place (${currentIdx} / ${words.length} words). Tap the blue button to continue.`;
+ let offset=input.value.length,index=0;for(const token of input.value.matchAll(/\S+/g)){if(index++===currentIdx){offset=token.index;break}}input.setSelectionRange(offset,offset);wordBox.textContent=currentIdx>=words.length?'Finished':words.slice(currentIdx,currentIdx+chunkSize()).join(' ')||'Read “here”';playBtn.textContent='3. Resume reading';progress();requestAnimationFrame(resize);$('session-status').textContent=`Restored reading text, notes and place (${currentIdx} / ${words.length} words). Tap “3. Start reading” to continue.`;
  }catch(err){$('session-status').textContent='Could not open file: '+err.message}finally{e.target.value=''}});
 
 if('ResizeObserver'in window)new ResizeObserver(resize).observe(canvas);window.addEventListener('resize',resize);window.addEventListener('orientationchange',resize);requestAnimationFrame(resize);
